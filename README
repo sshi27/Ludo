@@ -1,0 +1,60 @@
+Ludo hashing code repository
+
+---------------
+
+Algorithm benchmarks
+
+(only on Linux and FreeBSD)
+
+0. setup 
+
+sudo apt-get install google-perftools libgoogle-perftools-dev cmake build-essential gdb libssl-dev pkgconf tmux
+
+1. build
+
+mkdir release
+cd release
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -G "CodeBlocks - Unix Makefiles" ..
+make microbenchmarks -j4
+
+2. run tests
+
+./microbenchmarks
+
+
+----------------
+
+DPDK benckmarks
+
+0. setup
+
+1) login on CloudLab
+2) create profile: two physical machines with two physical links between them
+3) image: Ubuntu 16.04 or higher
+3) deploy on Wisconsin cluster
+4) compile DPDK 18.11 on both nodes and pktgen 3.5.9 on node 1
+5) insert DPDK driver on both nodes
+7) sudo apt-get install google-perftools libgoogle-perftools-dev cmake build-essential gdb libssl-dev pkgconf tmux
+
+1. build
+
+1) on Node 1 (work as forwarder)
+cd this-code-directory 
+make -j4
+
+2) on Node 2 (work as packet generator and bandwidth meter)
+cd pktgen-installation-directory/ 
+cp gen_pcap.py gen_pcap.sh pktgen-installation-directory/
+generate packets source files """ ./gen_pcap.sh """
+
+2. run
+
+1) on Node 1 (work as forwarder)
+cd this-code-directory 
+./run.sh skip l2 16000                   (for LudoForwarder, single thread)
+./run-parallel.sh skip l2 16000          (for LudoForwarder, multiple threads)
+
+2) on Node 2 (work as packet generator and bandwidth meter)
+
+cd pktgen-installation-directory/ 
+./pktgen -l 0-7 -n 4 --  --rx "(0,0,0),(1,0,1)" --tx "(0,0),(1,1)" --w "2,3,4,5,6,7" -f l2z-16000.pcap   (for L2 valid packets, Zipfian distribution )
